@@ -1,10 +1,3 @@
-"""
-app/dependencies.py
-────────────────────
-Inject đúng service (Redis hoặc Postgres) dựa trên current_backend.
-current_backend mặc định từ config, có thể đổi live qua endpoint /switch-backend.
-"""
-
 from typing import AsyncGenerator
 from fastapi import Depends
 
