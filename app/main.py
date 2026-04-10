@@ -8,22 +8,42 @@ from app.config import settings
 from app.routers import leaderboard, websocket
 from app.websocket_manager import redis_pubsub_listener
 from app.models import HealthResponse
+from app.dependencies import set_postgres_pool
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Khởi động Redis pubsub listener
     task = asyncio.create_task(redis_pubsub_listener())
+
+    # Khởi động PostgreSQL pool nếu được cấu hình
+    pg_pool = None
+    if settings.db_backend == "postgres" or settings.postgres_url:
+        try:
+            from app.postgres_service import PostgresService
+            pg_pool = await PostgresService.create_pool(settings.postgres_url)
+            svc = PostgresService(pg_pool)
+            await svc.init_schema()          # tạo bảng nếu chưa có
+            set_postgres_pool(pg_pool)
+            print(f"[DB] PostgreSQL connected: {settings.postgres_url}")
+        except Exception as e:
+            print(f"[DB] PostgreSQL unavailable: {e} — fallback to Redis")
+
     yield
+
+    # Cleanup
     task.cancel()
     try:
         await task
     except asyncio.CancelledError:
         pass
+    if pg_pool:
+        await pg_pool.close()
 
 
 app = FastAPI(
     title="Real-time Leaderboard API",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -41,8 +61,10 @@ app.include_router(websocket.router)
 
 @app.get("/", tags=["System"])
 async def root():
+    import app.dependencies as deps
     return {
         "message": "Leaderboard API dang chay",
+        "current_backend": deps.current_backend,
         "docs": "http://localhost:8000/docs",
         "websocket": "ws://localhost:8000/ws/leaderboard",
     }
