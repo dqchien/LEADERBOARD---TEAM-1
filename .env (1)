@@ -1,4 +1,12 @@
+# Redis
 REDIS_URL=redis://127.0.0.1:6379
 REDIS_DB=0
+LEADERBOARD_KEY=leaderboard
+
+# PostgreSQL
+POSTGRES_URL=postgresql://postgres:123456@localhost:5432/leaderboard
+DB_BACKEND=postgres
+
+# Server
 APP_HOST=0.0.0.0
 APP_PORT=8000
