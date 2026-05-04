@@ -20,7 +20,7 @@
   <div class="header-center">
     <div class="backend-switcher">
       <button class="backend-btn" id="btn-backend-redis" onclick="switchBackend('redis')">
-        ⚡ Redis
+        ⚡ Redis + Postgres
       </button>
       <button class="backend-btn" id="btn-backend-postgres" onclick="switchBackend('postgres')">
         🐘 PostgreSQL
@@ -41,28 +41,71 @@
   <div class="stats-bar">
     <div class="stat-card">
       <div class="stat-value" id="stat-total">--</div>
-      <div class="stat-label">Tổng người chơi</div>
+      <div class="stat-label">Total players</div>
     </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-updates">0</div>
-      <div class="stat-label">Updates phiên này</div>
+      <div class="stat-label">Updates this session</div>
     </div>
     <div class="stat-card">
       <div class="stat-value" id="stat-backend-display">--</div>
-      <div class="stat-label">Backend đang dùng</div>
+      <div class="stat-label">Backend currently in use</div>
     </div>
+  </div>
+
+  <!-- Performance Timer -->
+  <div class="perf-bar">
+    <div class="perf-title">⏱ Performance Comparison</div>
+    <div class="perf-cards">
+      <div class="perf-card perf-redis" id="perf-redis-card">
+        <div class="perf-icon">⚡</div>
+        <div class="perf-info">
+          <div class="perf-label">Redis + Postgres</div>
+          <div class="perf-time" id="perf-redis-time">--</div>
+        </div>
+        <div class="perf-meta" id="perf-redis-meta"></div>
+      </div>
+      <div class="perf-vs">VS</div>
+      <div class="perf-card perf-postgres" id="perf-postgres-card">
+        <div class="perf-icon">🐘</div>
+        <div class="perf-info">
+          <div class="perf-label">PostgreSQL</div>
+          <div class="perf-time" id="perf-postgres-time">--</div>
+        </div>
+        <div class="perf-meta" id="perf-postgres-meta"></div>
+      </div>
+    </div>
+    <div class="perf-live" id="perf-live" style="display:none">
+      <div class="perf-live-dot"></div>
+      <span>Running:</span>
+      <span class="perf-live-timer" id="perf-live-timer">00:00.000</span>
+    </div>
+    <div class="perf-verdict" id="perf-verdict"></div>
   </div>
 
   <!-- Controls -->
   <div class="controls">
+    <div class="sim-input-group">
+      <label for="sim-count" class="sim-input-label">Number of emulators</label>
+      <input
+        type="number"
+        id="sim-count"
+        class="sim-input"
+        value="500"
+        min="1"
+        max="50000"
+        step="1"
+        placeholder="500"
+      />
+    </div>
     <button class="btn btn-primary" id="btn-simulate">
-      ⚡ Tự động giả lập nạp điểm
+      ⚡ Start Simulation
     </button>
     <button class="btn btn-danger" id="btn-stop" style="display:none">
-      ⏹ Dừng
+      ⏹ Stop
     </button>
     <button class="btn btn-outline" id="btn-refresh">
-      🔄 Làm mới
+      🔄 Refresh
     </button>
     <button class="btn btn-danger" id="btn-reset">
       🗑 Reset
@@ -71,19 +114,76 @@
       <div class="progress-bar-wrap">
         <div class="progress-bar-fill" id="progress-fill"></div>
       </div>
-      <span id="progress-text">0 / 2000</span>
+      <span id="progress-text">0 / 0</span>
+    </div>
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="filter-panel">
+    <div class="filter-toggle" id="filter-toggle" onclick="toggleFilterPanel()">
+      <span>🔍 Search & Filter</span>
+      <span class="filter-badge" id="filter-badge" style="display:none">0</span>
+      <span class="filter-arrow" id="filter-arrow">▼</span>
+    </div>
+    <div class="filter-body" id="filter-body" style="display:none">
+      <div class="filter-grid">
+        <!-- Tìm theo Tên / User ID -->
+        <div class="filter-group">
+          <label class="filter-label">👤 Name / User ID</label>
+          <input type="text" id="filter-name" class="filter-input" placeholder="Enter name or user_id..." />
+        </div>
+        <!-- Tìm theo Rank -->
+        <div class="filter-group">
+          <label class="filter-label">🔢 Find by Rank</label>
+          <input type="number" id="filter-rank" class="filter-input" placeholder="e.g., 5" min="1" />
+        </div>
+        <!-- Lọc theo khoảng điểm -->
+        <div class="filter-group">
+          <label class="filter-label">🎯 Score Range</label>
+          <div class="filter-range">
+            <input type="number" id="filter-score-min" class="filter-input filter-input-half" placeholder="From" min="0" />
+            <span class="filter-range-sep">—</span>
+            <input type="number" id="filter-score-max" class="filter-input filter-input-half" placeholder="To" min="0" />
+          </div>
+        </div>
+        <!-- Lọc theo nhóm hạng -->
+        <div class="filter-group">
+          <label class="filter-label">🏅 Group ranking</label>
+          <div class="filter-group-btns">
+            <button class="filter-tag active" data-group="10" onclick="setGroupFilter(10)">Top 10</button>
+            <button class="filter-tag" data-group="50" onclick="setGroupFilter(50)">Top 50</button>
+            <button class="filter-tag" data-group="100" onclick="setGroupFilter(100)">Top 100</button>
+            <button class="filter-tag" data-group="0" onclick="setGroupFilter(0)">All</button>
+          </div>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary btn-sm" id="btn-apply-filter" onclick="applyFilters()">
+          🔍 Apply
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-clear-filter" onclick="clearFilters()">
+          ✕ Clear Filters
+        </button>
+        <span class="filter-result-count" id="filter-result-count"></span>
+      </div>
     </div>
   </div>
 
   <!-- Leaderboard -->
   <div class="lb-card">
     <div class="lb-header">
-      <span>Hạng</span>
-      <span>Người chơi</span>
-      <span style="text-align:right">Điểm</span>
+      <span>Rank</span>
+      <span>Player</span>
+      <span style="text-align:right">Score</span>
     </div>
     <div class="lb-body" id="lb-body">
       <div class="spinner"></div>
+    </div>
+    <div class="lb-footer" id="lb-footer" style="display:none">
+      <button class="btn-show-more" id="btn-show-more" onclick="toggleShowAll()">
+        <span id="show-more-text">View More</span>
+        <span class="show-more-icon" id="show-more-icon">▼</span>
+      </button>
     </div>
   </div>
 
@@ -91,13 +191,13 @@
 
 <!-- ─── PINNED BAR ─────────────────────────────────────────────────────────── -->
 <div class="pinned-bar">
-  <div class="pinned-label">📍 Thứ hạng của bạn</div>
+  <div class="pinned-label">📍 Your Rank</div>
   <div class="pinned-inner">
     <div class="pinned-rank-badge" id="pinned-rank">--</div>
     <div class="user-info">
       <div class="avatar" style="background:linear-gradient(135deg,#6c63ff,#00e5ff)">B</div>
       <div>
-        <div class="user-name" id="pinned-name">Bạn (demo_user)</div>
+        <div class="user-name" id="pinned-name">You (demo_user)</div>
         <div class="user-id">demo_user</div>
       </div>
     </div>
