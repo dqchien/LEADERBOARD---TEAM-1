@@ -322,7 +322,7 @@ function buildRow(entry, animIndex = 0) {
       <div class="user-info">
         <div class="avatar" style="${avatarGradient(entry.user_id)}">${initial}</div>
         <div>
-          <div class="user-name">${escHtml(entry.name || entry.user_id)}${isMe ? " <small style='color:var(--accent)'>← Bạn</small>" : ""}</div>
+          <div class="user-name">${escHtml(entry.name || entry.user_id)}${isMe ? " <small style='color:var(--accent)'>← You</small>" : ""}</div>
           <div class="user-id">${escHtml(entry.user_id)}</div>
         </div>
       </div>
@@ -833,7 +833,7 @@ async function startSimulate() {
   btnStop.style.display = "inline-flex";
   simProgress.classList.add("visible");
   progressText.textContent = `0 / ${simTotal.toLocaleString()}`;
-  showToast(`🚀 Bắt đầu giả lập ${simTotal.toLocaleString()} lượt nạp điểm...`);
+  showToast(`🚀 Start simulating ${simTotal.toLocaleString()} updates...`);
 
   // Bắt đầu đồng hồ đo hiệu năng
   startTimer();
@@ -892,14 +892,14 @@ async function startSimulate() {
 
 function stopSimulate() {
   simAborted = true;
-  showToast("⏸ Đang dừng...");
+  showToast("⏸ Stopping simulation...");
 }
 
 
 // ─── BACKEND SWITCHER ──────────────────────────────────────────────────────────
 async function switchBackend(target) {
   if (isSimulating) {
-    showToast("⚠️ Dừng giả lập trước khi chuyển backend");
+    showToast("⚠️ Stop simulation before switching to the backend.");
     return;
   }
 
@@ -989,8 +989,8 @@ async function fetchCurrentBackend() {
 
 // ─── RESET ────────────────────────────────────────────────────────────────────
 async function resetLeaderboard() {
-  if (isSimulating) { showToast("⚠️ Dừng giả lập trước khi reset"); return; }
-  if (!confirm("Xoá toàn bộ dữ liệu leaderboard?")) return;
+  if (isSimulating) { showToast("⚠️ Stop simulation before resetting"); return; }
+  if (!confirm("Delete all leaderboard data?")) return;
 
   try {
     const res = await apiFetch(`${API_BASE}/leaderboard/reset`, { method: "DELETE" });
