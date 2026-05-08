@@ -12,7 +12,7 @@ It provides REST endpoints for score updates, a WebSocket channel for live push 
 - Redis Hash for user metadata (name, avatar)
 - Atomic score update + rank fetch via Lua script (no race conditions)
 - PostgreSQL with asyncpg for persistent, disk-backed storage
-- Redis Pub/Sub + WebSocket to push updates to all connected clients in real-time
+- WebSocket to push live updates to all connected clients in real-time
 - FLIP animation for smooth real-time rank reordering in the frontend
 - Pinned "Your Rank" bar that animates on rank change
 - Simulate button that fires thousands of score updates to demo performance
@@ -125,7 +125,7 @@ leaderboard/
 │   ├── postgres_service.py  # PostgreSQL implementation (asyncpg, auto schema init)
 │   ├── dependencies.py      # Injects correct service based on current_backend
 │   ├── models.py            # Pydantic request/response schemas
-│   ├── websocket_manager.py # ConnectionManager + Redis Pub/Sub listener
+│   ├── websocket_manager.py # ConnectionManager for WebSocket broadcasting
 │   └── routers/
 │       ├── leaderboard.py   # REST endpoints + switch-backend endpoint
 │       └── websocket.py     # WebSocket endpoint
@@ -155,3 +155,5 @@ pytest tests/ -v
 ## Git / .env hygiene
 
 `.env` and virtual environment directories are intentionally excluded from version control. See `.gitignore`.
+
+---
